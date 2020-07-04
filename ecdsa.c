@@ -19,12 +19,12 @@ static epoint* g_Q;
 static epoint* g_G;
 
 //定义参数  ECDSA256的固定参数
-static const char sm2_p[] = "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF";
-static const char sm2_a[] = "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC";
-static const char sm2_b[] = "28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93";
-static const char sm2_n[] = "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123";
-static const char sm2_Gx[] = "32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7";
-static const char sm2_Gy[] = "BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0";
+static const char ecc_p[] = "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF";
+static const char ecc_a[] = "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC";
+static const char ecc_b[] = "28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93";
+static const char ecc_n[] = "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123";
+static const char ecc_Gx[] = "32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7";
+static const char ecc_Gy[] = "BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0";
 
 void initECDSA(miracl* pm)
 {
@@ -33,16 +33,16 @@ void initECDSA(miracl* pm)
 	g_a = mirvar(0);
 	g_b = mirvar(0);
 	g_n = mirvar(0);
-	cinstr(g_p, (char*)sm2_p);
-	cinstr(g_a, (char*)sm2_a);
-	cinstr(g_b, (char*)sm2_b);
-	cinstr(g_n, (char*)sm2_n);
+	cinstr(g_p, (char*)ecc_p);
+	cinstr(g_a, (char*)ecc_a);
+	cinstr(g_b, (char*)ecc_b);
+	cinstr(g_n, (char*)ecc_n);
 
 	ecurve_init(g_a, g_b, g_p, MR_AFFINE);
     big tmp_x = mirvar(0);
     big tmp_y = mirvar(0);
-    cinstr(tmp_x, (char*)sm2_Gx);
-    cinstr(tmp_y, (char*)sm2_Gy);
+    cinstr(tmp_x, (char*)ecc_Gx);
+    cinstr(tmp_y, (char*)ecc_Gy);
     g_G = epoint_init(); //内存分配给GF(p)椭圆曲线一个点 初始化为无穷大
     //设置点坐标 若属于当前方程返回true 不满足方程返回false
     if (!epoint_set(tmp_x, tmp_y, 1, g_G))
