@@ -406,6 +406,7 @@ void rsaSignMessage()
 	}
 }
 
+
 /***************FDH*****************/
 /**int* transform(int num, int length)
 {
@@ -450,11 +451,10 @@ int hash_full(int* num, int* vector, int r, int m)
 
 
 //RSA-FDH签名
-/**void rsaFdhSignMessage()
+void rsaFdhSignMessage()
 {
-	big key_N, key_D, key_P, key_S2;
+	big key_N, key_D, key_P, key_S2; //key_S2为签名信息
 	char buffer[130], ifname[32];
-
 	int buffer_length, i = 0;
 	FILE* infile, * outfile;
 	BOOL flag;
@@ -480,7 +480,7 @@ int hash_full(int* num, int* vector, int r, int m)
 	cinnum(key_D, infile);
 	fclose(infile);
 
-	printf("\tFDH签名的文件为 = ");
+	printf("\t要签名的文件为 = ");
 	getchar();
 
 	gets(ifname);
@@ -500,33 +500,24 @@ int hash_full(int* num, int* vector, int r, int m)
 		while (!flag) {
 			buffer_length = strlen(buffer);
 			buffer[buffer_length] = '\0';
-
 			mip->IOBASE = 128;
+			cinstr(key_P, buffer);
 
-			int buffer1[130] = { 0 };
-			buffer1[130] = atoi(buffer); //字符数组转化为整数数组
+			cotnum(key_P, stdout);  //要签名的信息 转化为数字
 
-
-			int m;
-			int* vector;
-			int* num_vector;
-			int hash[M] = { 0 };
-
-			//构建Hash
-			vector = hash_function(buffer_length);
-			for (int i = 0; i < buffer_length; i++)
+			sha256 sha123;
+			shs256_init(&sha123);
+			char szSha[32] = { 0 }; //存放hash后的结果
+			
+			shs_process(&sha123,key_P); //待签名的信息 key_P
+			shs_hash(&sha123, szSha);
+			for (int i = 0; i < 32; i++)
 			{
-				num_vector = transform(buffer1[i], R);
-				m = hash_full(num_vector, vector, R, M);
-				while (hash[m])
-					m = (m + 1) % M;
-				hash[m] = buffer1[i];
-				cinnum(key_P, hash);
-				cotnum(key_P, stdout);
-				free(num_vector);
+				if (szSha[i] == 0)
+					break;
 			}
-
-			powmod(key_P, key_D, key_N, key_S2); //c=H(m)^dmodn
+			big key_H = atoi(szSha);  //字符串数组转化为数字
+			powmod(key_H, key_D, key_N, key_S2); //签名信息c=H(m)^dmod n
 
 			mip->IOBASE = 16;
 			cotnum(key_S2, outfile);
@@ -538,7 +529,7 @@ int hash_full(int* num, int* vector, int r, int m)
 		fclose(infile);
 		fclose(outfile);
 	}
-}*/
+}
 
 //签名确认
 void rsaVertifyMessage()
@@ -644,7 +635,7 @@ int main()
 		printf("\t\t*             2:加密信息              *\n");
 		printf("\t\t*             3:解密信息              *\n");
 		printf("\t\t*             4:签名信息              *\n");
-		//printf("\t\t*             5:FDH签名信息           *\n");
+		printf("\t\t*             5:FDH签名信息           *\n");
 		printf("\t\t*             5:验证信息              *\n");
 		printf("\t\t*=============6:退出===================\n");
 		printf("\n\t\t请输入你要选择的菜单项=");
@@ -677,17 +668,17 @@ int main()
 			// printf("%lf\n",(double)(end-begin)/CLOCKS_PER_SEC);
 			system("pause");
 		}
-		/*else if (ch == '5')
+		else if (ch == '5')
 		{
 			rsaFdhSignMessage();
 			system("pause");
-		}*/
-		else if (ch == '5')
+		}
+		else if (ch == '6')
 		{
 			rsaVertifyMessage();
 			system("pause");
 		}
-	} while (ch != '6');
+	} while (ch != '7');
 	return 0;
 }
 
