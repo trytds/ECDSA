@@ -1,8 +1,9 @@
-#include "miracl.h"
+/*#include "miracl.h"
 #include "mirdef.h"
 #include "time.h"
 #include <stdlib.h>
 #include <stdio.h>
+
 
 typedef struct
 {
@@ -25,6 +26,8 @@ static const char eccdsa_b[] = "000000000000000000000000000000000000000000000000
 static const char eccdsa_n[] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141";
 static const char eccdsa_Gx[] = "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798";
 static const char eccdsa_Gy[] = "483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8";
+
+
 
 void initECDSA(miracl* pm)
 {
@@ -62,7 +65,6 @@ void initECDSA(miracl* pm)
     //公钥
     g_Q = epoint_init();
     ecurve_mult(g_nb, g_G, g_Q); //大K=Q  ecurve_mult为点乘
-
     epoint_free(g_Q);
     mirexit();
 }
@@ -95,11 +97,11 @@ digital_sign signECDSA(miracl* pm, big z)
     pm->IOBASE = 16;
     getchar();
     big tmp_rd = mirvar(0);
-    xgcd(k, g_n, k, k, k);  //求出k(-1)
+    xgcd(k, g_n, k, k, k);  //求出k(-1) k关于g_n的逆元
     multiply(g_nb, a.r, tmp_rd); //计算d*r
-    add(tmp_rd, z, tmp_rd); //计算e+d*r
-    multiply(k, tmp_rd, tmp_rd); //计算k(-1)(e+dr)
-    divide(tmp_rd, g_n, g_n); //计算s=k(-1)(e+dr)modn
+    add(tmp_rd, z, tmp_rd); //计算z+d*r
+    multiply(k, tmp_rd, tmp_rd); //计算k(-1)(z+dr)
+    divide(tmp_rd, g_n, g_n); //计算s=(z+dr)modn
     a.s = tmp_rd;
     while (0 == a.s)  //A6 若s==0 则返回A3
     {
@@ -202,4 +204,4 @@ int main()
     }
     //ShaTest();
     return 0;
-}
+}*/

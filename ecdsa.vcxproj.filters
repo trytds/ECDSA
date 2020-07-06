@@ -32,5 +32,8 @@
     <ClCompile Include="ecdsa.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="rsa.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
