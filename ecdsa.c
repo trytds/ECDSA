@@ -30,7 +30,7 @@ static const char eccdsa_gy[] = "483ada7726a3c4655da4fbfc0e1108a8fd17b448a685541
 
 void initecdsa(miracl* pm)
 {
-    pm->iobase = 16;
+    pm->IOBASE = 16;
     g_p = mirvar(0);
     g_a = mirvar(0);
     g_b = mirvar(0);
@@ -40,7 +40,7 @@ void initecdsa(miracl* pm)
     cinstr(g_b, (char*)eccdsa_b);
     cinstr(g_n, (char*)eccdsa_n);
 
-    ecurve_init(g_a, g_b, g_p, mr_affine);
+    ecurve_init(g_a, g_b, g_p, MR_AFFINE);
     big tmp_x = mirvar(0);
     big tmp_y = mirvar(0);
     cinstr(tmp_x, (char*)eccdsa_gx);
@@ -54,7 +54,7 @@ void initecdsa(miracl* pm)
 
     //私钥
     g_nb = mirvar(0);
-    irand(time(null));
+    irand(time(NULL));
     bigbits(256, g_nb); //产生一个256位的大整数
 
     while (mr_compare(g_nb, g_n) >= 0) //私钥nb要比n小
@@ -72,7 +72,7 @@ void initecdsa(miracl* pm)
 digital_sign signecdsa(miracl* pm, big z)
 {
     big k = mirvar(0); //随机数产生器产生随机数k[1,n-1] 
-    irand(time(null));
+    irand(time(NULL));
 
     bigrand(g_n, k); //产生一个小于g_n的大数随机数 k mz
 
@@ -80,21 +80,21 @@ digital_sign signecdsa(miracl* pm, big z)
     ecurve_mult(k, g_g, p); //a4 计算椭圆曲线点p(x1,y1) = kg 公开密钥 
 
     big r = mirvar(0);
-    r = p->x;
+    r = p->X;
     divide(r, g_n, g_n);//r=p(x)modn
     while (r == 0)  //计算椭圆曲线点r=zmodn 若r=0则返回第一步
     {
-        irand(time(null));
+        irand(time(NULL));
         bigrand(g_n, k);
         ecurve_mult(k, g_g, p);
-        r = p->x;
+        r = p->X;
         divide(r, g_n, g_n);
     }
 
     digital_sign a;
     a.r = mirvar(0);
     a.s = mirvar(0);
-    pm->iobase = 16;
+    pm->IOBASE = 16;
     //getchar();
     big tmp_rd = mirvar(0);
     xgcd(k, g_n, k, k, k);  //求出k(-1)
@@ -105,17 +105,17 @@ digital_sign signecdsa(miracl* pm, big z)
     a.s = tmp_rd;
     while (0 == a.s)  //a6 若s==0 则返回a3
     {
-        irand(time(null));
+        irand(time(NULL));
         bigrand(g_n, k);
         ecurve_mult(k, g_g, p);
-        r = p->x;
+        r = p->X;
         divide(r, g_n, g_n);
         while (r == 0) //计算r=zmodn 若r=0则返回第一步
         {
-            irand(time(null));
+            irand(time(NULL));
             bigrand(g_n, k);
             ecurve_mult(k, g_g, p);
-            r = p->x;
+            r = p->X;
             divide(r, g_n, g_n);
         }
         multiply(g_nb, a.r, tmp_rd); //da*r
@@ -159,7 +159,7 @@ int vertifyecdsa(digital_sign a, miracl* pm, big z)
     ecurve_mult(u2, g_q, g_xy2); //u2*ha   
     ecurve_add(g_xy1, g_xy2); //g_xy2=g_xy2+g_xy1
     big r = mirvar(0); //b7 计算r=x'1 mod n 检验r=r'是否成立 若成立则验证通过
-    r = g_xy2->x;
+    r = g_xy2->X;
     divide(r, g_n, g_n);
     if (!mr_compare(r, a.r))
     {
@@ -178,12 +178,12 @@ int main()
     start = clock();
     initecdsa(pm);
     finish = clock();
-    duration = (double)(finish - start) / clocks_per_sec;
+    duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("keygen: %f seconds\n", duration);
     start = clock();
     digital_sign a = signecdsa(pm, z);  //这里有毛病
     finish = clock();
-    duration = (double)(finish - start) / clocks_per_sec;
+    duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("sign: %f seconds\n", duration);
     printf("r:");
     cotnum(a.r, stdout);
@@ -192,7 +192,7 @@ int main()
     start = clock();
     int r = vertifyecdsa(a, pm, z);
     finish = clock();
-    duration = (double)(finish - start) / clocks_per_sec;
+    duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("vertify: %f seconds\n", duration);
     if (1 == r)
     {
