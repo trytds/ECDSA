@@ -28,31 +28,31 @@ int abs(int x)
 //产生一个强素数
 void genStrongPrime(big p, int n, long seed1, long seed2)
 {
-    int r, r1, r2;
-    irand(seed1);        //产生一个随机数，即初始化
-    bigbits(2 * n / 3, pd);   //生一个2*n/3 位（bit）的pd随机数
-    nxprime(pd, pd);      //nxprime(pd,x)找到一个x大于pd的素数，返回值为BOOL
-    expb2(n - 1, ph);       //ph = 2^(n-1),即2的(n-1)次方
-    divide(ph, pd, ph);    //ph = ph/pd  
-    expb2(n - 2, pl);
-    divide(pl, pd, pl);    //pl=pl/pd
-    subtract(ph, pl, ph);  //ph = ph-pl
-    irand(seed2);
-    bigrand(ph, ph);
-    add(ph, pl, ph);
-    r1 = subdiv(pd, 12, pl);   //pl=pd/12
-    r2 = subdiv(ph, 12, pl);   //pl=ph/12
-    r = 0;
-    while ((r1 * (r2 + r)) % 12 != 5)
-        r++;
-    incr(ph, r, ph);          //ph=ph+r
-    do
-    { //find p=2*r*pd+1 = 11 mod 12 
-        multiply(ph, pd, p);   //p = ph*pd
-        premult(p, 2, p);      //p = p*2
-        incr(p, 1, p);         //p = p+1
-        incr(ph, 12, ph);      //ph = ph+12
-    } while (!isprime(p));
+	int r, r1, r2;
+	irand(seed1);        //产生一个随机数，即初始化
+	bigbits(2 * n / 3, pd);   //生一个2*n/3 位（bit）的pd随机数
+	nxprime(pd, pd);      //nxprime(pd,x)找到一个x大于pd的素数，返回值为BOOL
+	expb2(n - 1, ph);       //ph = 2^(n-1),即2的(n-1)次方
+	divide(ph, pd, ph);    //ph = ph/pd  
+	expb2(n - 2, pl);
+	divide(pl, pd, pl);    //pl=pl/pd
+	subtract(ph, pl, ph);  //ph = ph-pl
+	irand(seed2);
+	bigrand(ph, ph);
+	add(ph, pl, ph);
+	r1 = subdiv(pd, 12, pl);   //pl=pd/12
+	r2 = subdiv(ph, 12, pl);   //pl=ph/12
+	r = 0;
+	while ((r1 * (r2 + r)) % 12 != 5)
+		r++;
+	incr(ph, r, ph);          //ph=ph+r
+	do
+	{ //find p=2*r*pd+1 = 11 mod 12 
+		multiply(ph, pd, p);   //p = ph*pd
+		premult(p, 2, p);      //p = p*2
+		incr(p, 1, p);         //p = p+1
+		incr(ph, 12, ph);      //ph = ph+12
+	} while (!isprime(p));
 }
 
 //同余求逆元
@@ -491,9 +491,9 @@ void rsaVertifyMessage()
 	cotnum(key_V, infile);
 
 	if (mr_compare(key_V, key_P) == 0) //如果签名信息代人后与原文相同 s^emodn=m 表示验证成功
-		printf("Vertify\n");
+		printf("\nVertify\n");
 	else
-		printf("Error\n");
+		printf("\nError\n");
 
 
 }
@@ -503,7 +503,7 @@ void rsaVertifyMessage()
 void rsaFdhSignMessage()
 {
 	big key_N, key_D, key_P, key_S2, key_H; //key_S2为签名信息, key_H为Hash后的信息
-	
+
 	char buffer[130], ifname[32];
 	int buffer_length, i = 0;
 	FILE* infile, * outfile;
@@ -517,7 +517,7 @@ void rsaFdhSignMessage()
 	key_D = mirvar(0);
 	key_P = mirvar(0);
 	key_S2 = mirvar(0);
-    key_H = mirvar(0);
+	key_H = mirvar(0);
 
 	if ((infile = fopen("key_N.dat", "rt")) == NULL) {
 		printf("\n不能打开文件key_N.dat");
@@ -565,11 +565,11 @@ void rsaFdhSignMessage()
 			//shs_process(&sha123,*buffer1++); //待签名的信息 key_P 此处类型有错误
 			shs_process(&sha123, key_P);
 			shs_hash(&sha123, szSha);
-			
+
 			//cinstr(key_H, buffer1); //大数字符串转化为大数
 			cinstr(key_H, key_P);
 			cotnum(key_H, stdout);
-			
+
 			powmod(key_H, key_D, key_N, key_S2); //签名信息c=H(m)^dmod n
 
 			mip->IOBASE = 16;
@@ -689,6 +689,7 @@ void rsaVertifyFdhMessage()
 int main()
 {
 	clock_t begin, end;
+	double duration;
 	char ch;
 	do {
 		//system("cls");
@@ -707,7 +708,11 @@ int main()
 
 		if (ch == '1')
 		{
+			begin = clock();
 			rsaGenerateKey();
+			end = clock();
+			duration = (double)(end - begin) / CLOCKS_PER_SEC;
+			printf("generate: %f seconds\n", duration);
 			system("pause");
 		}
 		else if (ch == '2')
@@ -715,35 +720,53 @@ int main()
 			begin = clock();
 			rsaEncryptMessage();
 			end = clock();
-			printf("%lf\n", (double)(end - begin) / CLOCKS_PER_SEC);
+			duration = (double)(end - begin) / CLOCKS_PER_SEC;
+			printf("encrypt: %f seconds\n", duration);
 			system("pause");
 		}
 		else if (ch == '3')
 		{
+			begin = clock();
 			rsaDecryptMessage();
+			end = clock();
+			duration = (double)(end - begin) / CLOCKS_PER_SEC;
+			printf("decrypt: %f seconds\n", duration);
 			system("pause");
 		}
 		else if (ch == '4')
 		{
-			// begin=clock();
+			begin=clock();
 			rsaSignMessage();
-			// end=clock();
-			// printf("%lf\n",(double)(end-begin)/CLOCKS_PER_SEC);
+			end=clock();
+			duration = (double)(end - begin) / CLOCKS_PER_SEC;
+			printf("sign: %f seconds\n", duration);
 			system("pause");
 		}
 		else if (ch == '5')
 		{
+			begin = clock();
 			rsaVertifyMessage();
+			end = clock();
+			duration = (double)(end - begin) / CLOCKS_PER_SEC;
+			printf("vertify: %f seconds\n", duration);
 			system("pause");
 		}
 		else if (ch == '6')
 		{
+			begin = clock();
 			rsaFdhSignMessage();
+			end = clock();
+			duration = (double)(end - begin) / CLOCKS_PER_SEC;
+			printf("FDHsign: %f seconds\n", duration);
 			system("pause");
 		}
 		else if (ch == '7')
 		{
+			begin = clock();
 			rsaVertifyFdhMessage();
+			end = clock();
+			duration = (double)(end - begin) / CLOCKS_PER_SEC;
+			printf("FDHvertify: %f seconds\n", duration);
 			system("pause");
 		}
 	} while (ch != '8');
