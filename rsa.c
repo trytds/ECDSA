@@ -665,7 +665,7 @@ void rsaVertifyFdhMessage()
 
 			//cinstr(key_H, buffer1); //大数字符串转化为大数
 			cinstr(key_H, key_P);
-			cotnum(key_H, stdout);   //FDH签名的Hash函数
+			cotnum(key_H, stdout);   //FDH签名的Hash值
 
 
 			if (fgets(buffer, 128, infile) == NULL)
@@ -679,7 +679,7 @@ void rsaVertifyFdhMessage()
 	mip->IOBASE = 16;
 	cotnum(key_V, infile);
 
-	if (mr_compare(key_V, key_H) == 0) //如果签名信息代人后与原文相同 s^emodn=m 表示验证成功
+	if (mr_compare(key_V, key_H) == 0) //如果签名信息代人后与原文相同 s^emodn=H(m) 表示验证成功
 		printf("Vertify\n");
 	else
 		printf("Error\n");
