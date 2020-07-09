@@ -18,7 +18,7 @@ static big g_b;
 static big g_n;
 static big g_nb;
 static epoint* g_q;
-static epoint* g_g;
+static epoint* g_G;
 
 //定义参数  eccsecp256k1的固定参数
 static const char eccdsa_p[] = "fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f";
@@ -45,9 +45,9 @@ void initecdsa(miracl* pm)
     big tmp_y = mirvar(0);
     cinstr(tmp_x, (char*)eccdsa_gx);
     cinstr(tmp_y, (char*)eccdsa_gy);
-    g_g = epoint_init(); //内存分配给gf(p)椭圆曲线一个点 初始化为无穷大
+    g_G = epoint_init(); //内存分配给gf(p)椭圆曲线一个点 初始化为无穷大
     //设置点坐标 若属于当前方程返回true 不满足方程返回false
-    if (!epoint_set(tmp_x, tmp_y, 1, g_g))
+    if (!epoint_set(tmp_x, tmp_y, 1, g_G))
     {
         exit(0);
     }
@@ -63,7 +63,7 @@ void initecdsa(miracl* pm)
     }
     //公钥
     g_q = epoint_init();
-    ecurve_mult(g_nb, g_g, g_q); //大k=q  ecurve_mult为点乘
+    ecurve_mult(g_nb, g_G, g_q); //大k=q  ecurve_mult为点乘
 
   /*  epoint_free(g_q);
     mirexit();*/   //free又被调用了 典型错误
@@ -77,7 +77,7 @@ digital_sign signecdsa(miracl* pm, big z)
     bigrand(g_n, k); //产生一个小于g_n的大数随机数 k mz
 
     epoint* p = epoint_init();
-    ecurve_mult(k, g_g, p); //a4 计算椭圆曲线点p(x1,y1) = kg 公开密钥 
+    ecurve_mult(k, g_G, p); //a4 计算椭圆曲线点p(x1,y1) = kg 公开密钥 
 
     big r = mirvar(0);
     r = p->X;
@@ -86,7 +86,7 @@ digital_sign signecdsa(miracl* pm, big z)
     {
         irand(time(NULL));
         bigrand(g_n, k);
-        ecurve_mult(k, g_g, p);
+        ecurve_mult(k, g_G, p);
         r = p->X;
         divide(r, g_n, g_n);
     }
@@ -107,14 +107,14 @@ digital_sign signecdsa(miracl* pm, big z)
     {
         irand(time(NULL));
         bigrand(g_n, k);
-        ecurve_mult(k, g_g, p);
+        ecurve_mult(k, g_G, p);
         r = p->X;
         divide(r, g_n, g_n);
         while (r == 0) //计算r=zmodn 若r=0则返回第一步
         {
             irand(time(NULL));
             bigrand(g_n, k);
-            ecurve_mult(k, g_g, p);
+            ecurve_mult(k, g_G, p);
             r = p->X;
             divide(r, g_n, g_n);
         }
@@ -153,7 +153,7 @@ int vertifyecdsa(digital_sign a, miracl* pm, big z)
 
     epoint* g_xy1; //计算椭圆曲线点(x'1,y'1)=[u1]g+[u2]ha 
     g_xy1 = epoint_init();
-    ecurve_mult(u1, g_g, g_xy1);
+    ecurve_mult(u1, g_G, g_xy1);
     epoint* g_xy2;
     g_xy2 = epoint_init();
     ecurve_mult(u2, g_q, g_xy2); //u2*ha   
@@ -194,7 +194,7 @@ int main()
     finish = clock();
     duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("vertify: %f seconds\n", duration);
-    if (1 == r)
+    if (0 == r)
     {
         printf("success\n");
     }
