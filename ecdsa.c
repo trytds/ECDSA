@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 
-
 typedef struct
 {
     big r;
@@ -21,14 +20,14 @@ static epoint* g_q;
 static epoint* g_G;
 
 //定义参数  eccsecp256k1的固定参数
-static const char eccdsa_p[] = "fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f";
+static const char eccdsa_p[] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F";
 static const char eccdsa_a[] = "0000000000000000000000000000000000000000000000000000000000000000";
 static const char eccdsa_b[] = "0000000000000000000000000000000000000000000000000000000000000007";
-static const char eccdsa_n[] = "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141";
-static const char eccdsa_gx[] = "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798";
-static const char eccdsa_gy[] = "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8";
+static const char eccdsa_n[] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141";
+static const char eccdsa_gx[] = "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798";
+static const char eccdsa_gy[] = "483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8";
 
-void initecdsa(miracl* pm)
+void initECDSA(miracl* pm)
 {
     pm->IOBASE = 16;
     g_p = mirvar(0);
@@ -69,7 +68,7 @@ void initecdsa(miracl* pm)
     mirexit();*/   //free又被调用了 典型错误
 }
 
-digital_sign signecdsa(miracl* pm, big z)
+digital_sign signECDSA(miracl* pm, big z)
 {
     big k = mirvar(0); //随机数产生器产生随机数k[1,n-1] 
     irand(time(NULL));
@@ -129,7 +128,7 @@ digital_sign signecdsa(miracl* pm, big z)
     return a;
 }
 
-int vertifyecdsa(digital_sign a, miracl* pm, big z)
+int vertifyECDSA(digital_sign a, miracl* pm, big z)
 {
     if (!(a.r > 0 && mr_compare(g_n, a.r))) //b1 检验r'[1,n-1]是否成立
     {
@@ -176,12 +175,12 @@ int main()
     bigdig(32, 16, z); //产生32位的16进制随机数
     clock_t start, finish;
     start = clock();
-    initecdsa(pm);
+    initECDSA(pm);
     finish = clock();
     duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("keygen: %f seconds\n", duration);
     start = clock();
-    digital_sign a = signecdsa(pm, z);  //这里有毛病
+    digital_sign a = signECDSA(pm, z);  //这里有毛病
     finish = clock();
     duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("sign: %f seconds\n", duration);
@@ -190,7 +189,7 @@ int main()
     printf("s:");
     cotnum(a.s, stdout);
     start = clock();
-    int r = vertifyecdsa(a, pm, z);
+    int r = vertifyECDSA(a, pm, z);
     finish = clock();
     duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("vertify: %f seconds\n", duration);

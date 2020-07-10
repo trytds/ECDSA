@@ -680,9 +680,9 @@ void rsaVertifyFdhMessage()
 	cotnum(key_V, infile);
 
 	if (mr_compare(key_V, key_H) == 0) //如果签名信息代人后与原文相同 s^emodn=H(m) 表示验证成功
-		printf("Vertify\n");
+		printf("\nVertify\n");
 	else
-		printf("Error\n");
+		printf("\nError\n");
 
 }
 
