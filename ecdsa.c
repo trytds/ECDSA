@@ -72,28 +72,29 @@ digital_sign signECDSA(miracl* pm, big z)
 {
     big k = mirvar(0); //随机数产生器产生随机数k[1,n-1] 
     irand(time(NULL));
-
     bigrand(g_n, k); //产生一个小于g_n的大数随机数 k mz
 
     epoint* p = epoint_init();
     ecurve_mult(k, g_G, p); //a4 计算椭圆曲线点p(x1,y1) = kg 公开密钥 
 
-    big r = mirvar(0);
-    r = p->X;
-    divide(r, g_n, g_n);//r=p(x)modn
-    while (r == 0)  //计算椭圆曲线点r=zmodn 若r=0则返回第一步
-    {
-        irand(time(NULL));
-        bigrand(g_n, k);
-        ecurve_mult(k, g_G, p);
-        r = p->X;
-        divide(r, g_n, g_n);
-    }
+    //big r = mirvar(0);
+    //r = p->X;
 
     digital_sign a;
     a.r = mirvar(0);
     a.s = mirvar(0);
     pm->IOBASE = 16;
+    a.r = p->X;
+    divide(a.r, g_n, g_n);//r=p(x)modn
+    while (a.r == 0)  //计算椭圆曲线点r=zmodn 若r=0则返回第一步
+    {
+        irand(time(NULL));
+        bigrand(g_n, k);
+        ecurve_mult(k, g_G, p);
+        a.r = p->X;
+        divide(a.r, g_n, g_n);
+    }
+
     //getchar();
     big tmp_rd = mirvar(0);
     xgcd(k, g_n, k, k, k);  //求出k(-1)
@@ -102,20 +103,22 @@ digital_sign signECDSA(miracl* pm, big z)
     multiply(k, tmp_rd, tmp_rd); //计算k(-1)(e+dr)
     divide(tmp_rd, g_n, g_n); //计算s=k(-1)(e+dr)modn
     a.s = tmp_rd;
-    while (0 == a.s)  //a6 若s==0 则返回a3
+    while (a.s==0)  //a6 若s==0 则返回a3
     {
         irand(time(NULL));
         bigrand(g_n, k);
         ecurve_mult(k, g_G, p);
-        r = p->X;
-        divide(r, g_n, g_n);
-        while (r == 0) //计算r=zmodn 若r=0则返回第一步
+        //r = p->X;
+        a.r = p->X;
+        //divide(r, g_n, g_n);
+        divide(a.r, g_n, g_n);
+        while (a.r == 0) //计算r=zmodn 若r=0则返回第一步
         {
             irand(time(NULL));
             bigrand(g_n, k);
             ecurve_mult(k, g_G, p);
-            r = p->X;
-            divide(r, g_n, g_n);
+            a.r = p->X;
+            divide(a.r, g_n, g_n);
         }
         multiply(g_nb, a.r, tmp_rd); //da*r
         add(tmp_rd, z, tmp_rd); // z是hash后的z  z+da*r
@@ -123,8 +126,8 @@ digital_sign signECDSA(miracl* pm, big z)
         divide(tmp_rd, g_n, g_n); //k(-1)*(z+da*r)modn
         a.s = tmp_rd;
     } //(r,s)计算完毕
-      //add(a.s,g_n,a.s);
-      //divide(a.s,g_n,g_n); //g_n=a.s/g_n a.s=a.smodg_n
+      add(a.s,g_n,a.s);
+      divide(a.s,g_n,g_n); //g_n=a.s/g_n a.s=a.smodg_n
     return a;
 }
 
@@ -193,7 +196,7 @@ int main()
     finish = clock();
     duration = (double)(finish - start) / CLOCKS_PER_SEC;
     printf("vertify: %f seconds\n", duration);
-    if (0 == r)
+    if (1 == r)
     {
         printf("success\n");
     }
