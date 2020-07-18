@@ -69,6 +69,7 @@ void initSM2(miracl* pm)
 	ecurve_mult(g_nb, g_G, g_Q);  //g_Q = g_nb*g_G
 }
 
+//sm2签名
 digital_sign signSM2(miracl* pm, big z)
 {
 	big k = mirvar(0);
@@ -143,6 +144,7 @@ digital_sign signSM2(miracl* pm, big z)
 	return a;
 }
 
+//sm2验证
 int vertifySM2(digital_sign a, miracl* pm, big z)
 {
 	if (!(a.r > 0 && mr_compare(g_n, a.r)))
@@ -173,7 +175,7 @@ int vertifySM2(digital_sign a, miracl* pm, big z)
 	big R = mirvar(0);
 	add(z, g_xy2->X, R);
 	divide(R, g_n, g_n);
-	if (!mr_compare(R, a.r))
+	if (!mr_compare(R, a.r))  //计算R=(e’+x1’)mod n，检验R=r’是否成立
 	{
 		return 1;
 	}
@@ -211,11 +213,11 @@ int main()
 	printf("Vertify: %f seconds\n", duration);
 	if (1 == r)
 	{
-		printf("Vertify");
+		printf("Success\n");
 	}
 	else
 	{
-		printf("No\n");
+		printf("Error\n");
 	}
 	return 0;
 }
