@@ -27,6 +27,9 @@
     <ClInclude Include="mirdef.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="sm3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ecdsa.c">
@@ -36,6 +39,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="sm2.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sm3.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sm2encry0.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sm2en.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
