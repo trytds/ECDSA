@@ -57,7 +57,7 @@ void initSM2()
 	ecurve_init(a, b, p, MR_AFFINE); //初始化椭圆曲线
 
 
-	
+
 	epoint* kPb = NULL;
 
 	G = epoint_init(); //内存分配给Gf(p)椭圆曲线一个点 初始化为无穷大
@@ -73,13 +73,13 @@ void initSM2()
 	bigrand(n, db);
 	printf("私钥db="); cotnum(db, stdout); //生成私钥
 	ecurve_mult(db, G, Pb); //生成公钥
-	printf("参数: \np:  %s",p); cotnum(p, stdout);  
+	printf("参数: \np:  %s", p); cotnum(p, stdout);
 	printf("a:  %s", a); cotnum(a, stdout);
 	printf("b:  %s", b); cotnum(b, stdout);
 	printf("n:  %s", n); cotnum(n, stdout);
 	printf("Gx:  %s", Gx); cotnum(Gx, stdout);
 	printf("Gy:  %s", Gy); cotnum(Gy, stdout);
-} 
+}
 
 
 
@@ -95,7 +95,7 @@ void encrySM2()
 	y2 = mirvar(0);
 	//n = mirvar(0);
 
-	
+
 	//epoint* Pb = NULL; //公钥
 	epoint* kPb = NULL;
 	epoint* C1 = NULL;
@@ -131,12 +131,12 @@ void encrySM2()
 	cotnum(k, stdout);
 
 	//进入A2 生成点S坐标(x1,y1)=[k]G  C1 
-	//ecurve_mult(k, G, C1);   
+	ecurve_mult(k, G, C1);   
 	epoint_get(C1, x1, y1); //获取点x1,y1坐标         
 	printf("x1: ");  cotnum(x1, stdout);
 	printf("y1: ");  cotnum(y1, stdout);
-	big_to_bytes(32, x1, (char *)msg, TRUE);  //char *少打一个空格
-	big_to_bytes(32, y1, (char *)msg + 32, TRUE);
+	big_to_bytes(32, x1, (char*)msg, TRUE);  //char *少打一个空格
+	big_to_bytes(32, y1, (char*)msg + 32, TRUE);
 
 	//进入A3   
 	if (point_at_infinity(Pb)) {
@@ -147,10 +147,10 @@ void encrySM2()
 	//进入A4
 	ecurve_mult(k, Pb, kPb); //kpb=K*pb
 	epoint_get(kPb, x2, y2);
-    printf("x2: "); cotnum(x2, stdout);
+	printf("x2: "); cotnum(x2, stdout);
 	printf("y2: "); cotnum(y2, stdout);
-	big_to_bytes(32, x2, (char *)x2andy2_byte, TRUE); //转化成比特串
-	big_to_bytes(32, y2, (char *)x2andy2_byte + 32, TRUE);
+	big_to_bytes(32, x2, (char*)x2andy2_byte, TRUE); //转化成比特串
+	big_to_bytes(32, y2, (char*)x2andy2_byte + 32, TRUE);
 
 	//进入A5
 	klen = strlen(plain);  //需要派生得到的长度
@@ -166,7 +166,7 @@ void encrySM2()
 	//进入A7 C3 = msg + 64 + klen
 	char temp[6000];
 	memcpy(temp, x2andy2_byte, 32); //从x2andy2_byte复制到temp 复制32个
-	memcpy(temp + 32, plain, klen); 
+	memcpy(temp + 32, plain, klen);
 	memcpy(temp + 32 + klen, x2andy2_byte + 32, 32);
 	sm3((unsigned char*)temp, 64 + klen, (unsigned char*)msg + 64 + klen);
 
@@ -198,7 +198,7 @@ void decrySM2()
 	memset(plain, 0, sizeof(plain));
 	int klen;
 
-	
+
 	epoint* dbC1 = NULL;
 	epoint* C1 = NULL;
 	C1 = epoint_init();
@@ -209,15 +209,15 @@ void decrySM2()
 	//开始解密
 	printf("——————————开始解密——————————\n");
 
-	bytes_to_big(32, (char *)msg, x1);    //从msg中分别取出32位放入x和y
-	bytes_to_big(32, (char *)msg + 32, y1);
+	bytes_to_big(32, (char*)msg, x1);    //从msg中分别取出32位放入x和y
+	bytes_to_big(32, (char*)msg + 32, y1);
 
 	//进入B1 初始化点C1=（x，y）是否在椭圆曲线 上
 	if (!epoint_set(x1, y1, 0, C1)) {
 		printf("C1不在椭圆曲线上");
 		return 0;
 	}
-	
+
 
 	//进入B2
 	if (point_at_infinity(C1)) {
@@ -231,20 +231,20 @@ void decrySM2()
 	printf("x2:"); cotnum(x2, stdout);
 	printf("y2:"); cotnum(y2, stdout);
 
-	big_to_bytes(32, x2, (char *)x2andy2_byte, TRUE);
-	big_to_bytes(32, y2, (char *)x2andy2_byte + 32, TRUE);
+	big_to_bytes(32, x2, (char*)x2andy2_byte, TRUE);
+	big_to_bytes(32, y2, (char*)x2andy2_byte + 32, TRUE);
 
 	big m;
 	m = mirvar(0);
 	//test
-	bytes_to_big(64, (char *)x2andy2_byte, m);
+	bytes_to_big(64, (char*)x2andy2_byte, m);
 	pm->IOBASE = 16;
 	printf("x2andy2_byte: "); cotnum(m, stdout);
 
 	//进入B4
 	klen = strlen(plain);
 	//如果kdf返回的值为0，退出
-	if (kdf(x2andy2_byte, klen, (unsigned char*)plain) == 0) 
+	if (kdf(x2andy2_byte, klen, (unsigned char*)plain) == 0)
 	{
 		printf("t全0");
 		return 0;
@@ -274,7 +274,7 @@ void decrySM2()
 }
 
 //密钥派生函数
-int kdf(unsigned char *x2andy2_byte, int klen, unsigned char *kbuf)
+int kdf(unsigned char* x2andy2_byte, int klen, unsigned char* kbuf)
 {
 	unsigned char buf[70];
 	unsigned char digest[32];
@@ -329,17 +329,17 @@ int main()
 	finish = clock();
 	duration = (double)(finish - start) / CLOCKS_PER_SEC;
 	printf("KeyGen: %f seconds\n", duration);
-	
+
 	start = clock();
 	encrySM2();
 	finish = clock();
 	duration = (double)(finish - start) / CLOCKS_PER_SEC;
 	printf("Encrypt: %f seconds\n", duration);
-	
+
 	start = clock();
 	decrySM2();
 	finish = clock();
-	
+
 	system("pause");
 	return 0;
 }
