@@ -13,6 +13,11 @@ static big Pb; //公钥
 static epoint* G; //基点
 static miracl* pm;
 
+char msg[6000]; //密文用数组存储
+char plain[5000]; //明文用数组存储
+unsigned char x2andy2_byte[64];
+
+
 
 struct
 {
@@ -30,7 +35,6 @@ struct
 	"32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7",
 	"BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0",
 };
-
 
 
 //sm2私钥公钥生成
@@ -107,16 +111,16 @@ void encrySM2()
 	//cinstr(n, para.n);
 	ecurve_mult(db, G, Pb); //求出公钥
 
-	char msg[6000]; //密文用数组存储
-	char plain[5000]; //明文用数组存储
+	//char msg[6000]; //密文用数组存储
+	//char plain[5000]; //明文用数组存储
 	//char t1[5000] = { 0 };
 	//char t2[5000] = { 0 };
-	unsigned char x2andy2_byte[64];
+	//unsigned char x2andy2_byte[64];
 
 	memset(x2andy2_byte, 0, sizeof(x2andy2_byte));
 	memset(plain, 0, sizeof(plain));
 
-	int klen;  //期望得到的密钥byte长度
+	int klen;  //期望得到的密钥byte长度 这里也设置为全局变量
 	FILE* fp; //存放明文
 	fopen_s(&fp, "3.txt", "r+");
 	fgets(plain, 255, fp); //明文存放到数组中 255表示读取的最大字符数
@@ -191,9 +195,7 @@ void decrySM2()
 	x2 = mirvar(0);
 	y2 = mirvar(0);
 	k = mirvar(0);
-	char msg[6000];
-	char plain[5000]; //明文用数组存储
-	unsigned char x2andy2_byte[64];
+	
 	memset(x2andy2_byte, 0, sizeof(x2andy2_byte));
 	memset(plain, 0, sizeof(plain));
 	int klen;
@@ -205,12 +207,14 @@ void decrySM2()
 	dbC1 = epoint_init();//初始化点
 	//bigrand(n, k);
 	//ecurve_mult(k, G, C1);
+	//epoint_get(C1, x1, y1);//获取点x1、y1坐标
+
 
 	//开始解密
 	printf("——————————开始解密——————————\n");
 
-	bytes_to_big(32, (char*)msg, x1);    //从msg中分别取出32位放入x和y
-	bytes_to_big(32, (char*)msg + 32, y1);
+	bytes_to_big(32, (char *)msg, x1);    //从msg中分别取出32位放入x和y
+	bytes_to_big(32, (char *)msg + 32, y1);
 
 	//进入B1 初始化点C1=（x，y）是否在椭圆曲线 上
 	if (!epoint_set(x1, y1, 0, C1)) {
@@ -250,7 +254,7 @@ void decrySM2()
 		return 0;
 	}
 
-	//B5
+	//进入B5
 	for (int i = 0; i < klen; i++)     //M'(outmsg)=C2 ^ t(outmsg)
 	{
 		plain[i] ^= msg[i + 64];//密文从65位开始为c2
@@ -339,6 +343,8 @@ int main()
 	start = clock();
 	decrySM2();
 	finish = clock();
+	duration = (double)(finish - start) / CLOCKS_PER_SEC;
+	printf("Decrypt: %f seconds\n", duration);
 
 	system("pause");
 	return 0;
