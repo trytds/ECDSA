@@ -27,8 +27,8 @@
 //{
 //	char msg[6000];
 //	char plain[5000];
-//	char t1[5000] = { 0 };
-//	char t2[5000] = { 0 };
+//	//char t1[5000] = { 0 };
+//	//char t2[5000] = { 0 };
 //	unsigned char x2andy2_byte[64];
 //	int klen;//期望得到密钥的byte长度 =strlen(plain)（与文档要求不同）
 //
@@ -200,7 +200,6 @@
 //		//return 0;
 //	}
 //	printf("\n获得明文：%s\n\n", plain);
-//
 //
 //
 //
