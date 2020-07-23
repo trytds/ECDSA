@@ -12,11 +12,9 @@ static big db; //私钥
 static big Pb; //公钥
 static epoint* G; //基点
 static miracl* pm;
-
 char plain[5000]; //明文
 char msg[6000]; //密文
 unsigned char x2andy2_byte[64];
-
 
 struct
 {
@@ -34,7 +32,6 @@ struct
 	"32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7",
 	"BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0",
 };
-
 
 //sm2私钥公钥生成
 void initSM2()
@@ -179,12 +176,8 @@ void decrySM2()
 	y1 = mirvar(0);
 	x2 = mirvar(0);
 	y2 = mirvar(0);
-	
-
 	memset(x2andy2_byte, 0, sizeof(x2andy2_byte));
 	int klen;
-
-
 	epoint* dbC1 = NULL;
 	epoint* C1 = NULL;
 	C1 = epoint_init();
@@ -303,7 +296,6 @@ int kdf(unsigned char *x2andy2_byte, int klen, unsigned char *kbuf)
 		return 0;  //全0
 
 }
-
 
 int main()
 {

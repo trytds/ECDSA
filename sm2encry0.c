@@ -142,9 +142,9 @@
 //	C1 = epoint_init();
 //	x2 = mirvar(0);
 //	y2 = mirvar(0);
-//	memset(x2andy2_byte, 0, sizeof(x2andy2_byte));
+//	//memset(x2andy2_byte, 0, sizeof(x2andy2_byte));
 //	//bzero(x2andy2_byte, sizeof(x2andy2_byte));
-//	memset(plain, 0, sizeof(plain));
+//	//memset(plain, 0, sizeof(plain));
 //	//bzero(plain, sizeof(plain));
 //	epoint* dbC1 = NULL;
 //	dbC1 = epoint_init();//≥ı ºªØµ„
