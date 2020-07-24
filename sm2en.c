@@ -11,10 +11,7 @@ static big n;
 static big db; //私钥
 static big Pb; //公钥
 static epoint* G; //基点
-static miracl* pm;
-char plain[5000]; //明文
-char msg[6000]; //密文
-unsigned char x2andy2_byte[64];
+
 
 struct
 {
@@ -34,9 +31,8 @@ struct
 };
 
 //sm2私钥公钥生成
-void initSM2()
+int initSM2(miracl* pm)
 {
-	pm = mirsys(1000, 0);
 	big Gx, Gy, x1, y1, x2, y2;
 	p = mirvar(0);
 	a = mirvar(0);
@@ -84,7 +80,7 @@ void initSM2()
 
 
 //sm2加密
-void encrySM2()
+int encrySM2(miracl* pm,char *plain,int plainlen,char *msg)
 {
 	pm->IOBASE = 16;
 	big k, x1, y1, x2, y2;
@@ -99,15 +95,8 @@ void encrySM2()
 	kPb = epoint_init();
 	C1 = epoint_init();
 	
+	unsigned char x2andy2_byte[64];
 	memset(x2andy2_byte, 0, sizeof(x2andy2_byte));
-	memset(plain, 0, sizeof(plain));
-
-	int klen;  //期望得到的密钥byte长度 这里也设置为全局变量
-	FILE* fp; //存放明文
-	fopen_s(&fp, "3.txt", "r+");
-	fgets(plain, 255, fp); //明文存放到数组中 从fp指向的文件读取255个字符到plain中
-	fclose(fp);
-	printf("\n明文: %s\n\n", plain);
 
 	//加密
 	printf("——————————开始加密——————————\n");
@@ -139,12 +128,11 @@ void encrySM2()
 	big_to_bytes(32, y2, (char*)x2andy2_byte + 32, TRUE);
 
 	//进入A5
-	klen = strlen(plain);  //需要派生得到的长度
-	if (kdf(x2andy2_byte, klen, (unsigned char*)msg + 64) == 0) //如果t为全0的比特串 则返回
+	if (kdf(x2andy2_byte, plainlen, msg + 64) == 0) //如果t为全0的比特串 则返回
 		return 0;
 
 	//进入A6 C2  密文从65位开始为c2
-	for (int i = 0; i < klen; i++)
+	for (int i = 0; i < plainlen; i++)
 	{
 		msg[64 + i] ^= plain[i];
 	}
@@ -152,23 +140,23 @@ void encrySM2()
 	//进入A7 C3 = msg + 64 + klen
 	char temp[6000];
 	memcpy(temp, x2andy2_byte, 32); 
-	memcpy(temp + 32, plain, klen);
-	memcpy(temp + 32 + klen, x2andy2_byte + 32, 32);
-	sm3((unsigned char*)temp, 64 + klen, (unsigned char*)msg + 64 + klen);
+	memcpy(temp + 32, plain, plainlen);
+	memcpy(temp + 32 + plainlen, x2andy2_byte + 32, 32);
+	sm3((unsigned char*)temp, 64 + plainlen, (unsigned char*)msg + 64 + plainlen);
 
-	printf("发送消息（C1||C2||C3）生成，发送消息长度：%dbyte \n内容：", 32 + 64 + klen);
+	printf("发送消息（C1||C2||C3）生成，发送消息长度：%dbyte \n内容：", 32 + 64 + plainlen);
 	big m;
 	m = mirvar(0);
-	bytes_to_big(32 + 64 + klen, msg, m); //将32+64+klen字符的明文，转换成大数
+	bytes_to_big(32 + 64 + plainlen, msg, m); //将32+64+klen字符的明文，转换成大数
 	pm->IOBASE = 16;
 	cotnum(m, stdout);
 
-	printf("\n密文: %x\n\n", msg);  //十六进制输出防止乱码
+	printf("\n密文: %X\n\n", msg);  
 
 }
 
 //sm2解密
-void decrySM2()
+int decrySM2(miracl *pm,char *cipher,int plainlen,char *msg)
 {
 	pm->IOBASE = 16;
 	big k, x1, y1, x2, y2;
@@ -176,8 +164,8 @@ void decrySM2()
 	y1 = mirvar(0);
 	x2 = mirvar(0);
 	y2 = mirvar(0);
+	unsigned char x2andy2_byte[64];
 	memset(x2andy2_byte, 0, sizeof(x2andy2_byte));
-	int klen;
 	epoint* dbC1 = NULL;
 	epoint* C1 = NULL;
 	C1 = epoint_init();
@@ -186,8 +174,8 @@ void decrySM2()
 	//开始解密
 	printf("——————————开始解密——————————\n");
 
-	bytes_to_big(32, (char *)msg, x1);    //从msg中分别取出32位放入x和y
-	bytes_to_big(32, (char *)msg + 32, y1);
+	bytes_to_big(32, (char *)cipher, x1);    //分别取出32位放入x和y
+	bytes_to_big(32, (char *)cipher + 32, y1);
 
 	//进入B1 初始化点C1=（x，y）是否在椭圆曲线 上
 	if (!epoint_set(x1, y1, 0, C1)) {
@@ -218,35 +206,34 @@ void decrySM2()
 	printf("x2andy2_byte: "); cotnum(m, stdout);
 
 	//进入B4                                  
-	klen = strlen(plain);
-	//如果kdf返回的值为0，退出
-	if (kdf(x2andy2_byte, klen, (unsigned char*)plain) == 0)
+	if (kdf(x2andy2_byte, plainlen, msg) == 0)
 	{
 		printf("t全0\n");
 		return 0;
 	}
 
 	//进入B5
-	for (int i = 0; i < klen; i++)     //M'(outmsg)=C2 ^ t(outmsg)
+	for (int i = 0; i < plainlen; i++)     //M'(outmsg)=C2 ^ t(outmsg)
 	{
-		plain[i] ^= msg[i + 64];//密文从65位开始为c2
+		msg[i] ^= cipher[i + 64];//密文从65位开始为c2
 	}
 
 	//进入B6
 	char temp[6000];         
-	memset(temp, 0, sizeof(temp));
+    memset(temp, 0, sizeof(temp));
 	memcpy(temp, x2andy2_byte, 32);
-	memcpy(temp + 32, plain, klen);
-	memcpy(temp + 32 + klen, x2andy2_byte + 32, 32);
+	memcpy(temp + 32, msg, plainlen);
+	memcpy(temp + 32 + plainlen, x2andy2_byte + 32, 32);
 	char u[32];
-	sm3((unsigned char*)temp, 64 + klen, (unsigned char*)u);
-	if (memcmp(u, msg + 64 + klen, 32) != 0)//判断u=c3则继续
+	sm3((unsigned char*)temp, 64 + plainlen, (unsigned char*)u);
+	if (memcmp(u, cipher + 64 + plainlen, 32) != 0)//判断u=c3则继续
 	{
 		printf("error；\n");
 	}
-	printf("\n获得明文：%s\n\n", plain);
+	printf("\n获得明文：%s\n\n", msg);
 }
 
+//密钥派生函数 
 int kdf(unsigned char *x2andy2_byte, int klen, unsigned char *kbuf)
 {
 
@@ -283,7 +270,7 @@ int kdf(unsigned char *x2andy2_byte, int klen, unsigned char *kbuf)
 	}
 
 	memcpy(p, digest, n);
-
+	
 	for (i = 0; i < klen; i++)
 	{
 		if (kbuf[i] != 0)
@@ -297,30 +284,10 @@ int kdf(unsigned char *x2andy2_byte, int klen, unsigned char *kbuf)
 
 }
 
-int main()
-{
-	clock_t start, finish;
-	double duration;
 
-	start = clock();
-	initSM2();
-	finish = clock();
-	duration = (double)(finish - start) / CLOCKS_PER_SEC;
-	printf("KeyGen: %f seconds\n", duration);
 
-	start = clock();
-	encrySM2();
-	finish = clock();
-	duration = (double)(finish - start) / CLOCKS_PER_SEC;
-	printf("Encrypt: %f seconds\n", duration);
 
-	start = clock();
-	decrySM2();
-	finish = clock();
-	duration = (double)(finish - start) / CLOCKS_PER_SEC;
-	printf("Decrypt: %f seconds\n", duration);
 
-	system("pause");
-	return 0;
-}
+
+
 

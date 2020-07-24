@@ -143,10 +143,12 @@
     <ClInclude Include="ecn.h" />
     <ClInclude Include="miracl.h" />
     <ClInclude Include="mirdef.h" />
+    <ClInclude Include="sm2.h" />
     <ClInclude Include="sm3.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ecdsa.c" />
+    <ClCompile Include="main.c" />
     <ClCompile Include="rsa.c" />
     <ClCompile Include="sm2.c" />
     <ClCompile Include="sm2en.c" />
