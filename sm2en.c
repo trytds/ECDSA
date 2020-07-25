@@ -12,7 +12,6 @@ static big db; //私钥
 static big Pb; //公钥
 static epoint* G; //基点
 
-
 struct
 {
 	char* p;//椭圆曲线的参数
@@ -283,11 +282,3 @@ int kdf(unsigned char *x2andy2_byte, int klen, unsigned char *kbuf)
 		return 0;  //全0
 
 }
-
-
-
-
-
-
-
-

@@ -9,9 +9,7 @@ int main()
 	unsigned char tx[5000] = "0"; //明文
 	unsigned char mtx[5000] = "0"; //解密
 	unsigned char etx[6000]; //密文
-
-	
-	miracl* pm = mirsys(1000, 0);
+    miracl* pm = mirsys(1000, 0);
 	clock_t start, finish;
 	double duration;
 
