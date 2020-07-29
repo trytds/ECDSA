@@ -5,5 +5,5 @@
 //int kdf(unsigned char* x2andy2_byte, int klen, unsigned char* kbuf);
 //
 
-#include "miracl.h"
-int initSM2(miracl* pm);
+//#include "miracl.h"
+//int initSM2(miracl* pm);

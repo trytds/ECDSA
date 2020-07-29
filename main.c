@@ -46,7 +46,7 @@
 //
 //
 
-#include<stdio.h>
+/**#include<stdio.h>
 #include<time.h>
 #include<string.h>
 #include "miracl.h"
@@ -57,4 +57,4 @@ int main()
 	miracl* pm = mirsys(1000, 0);
 	initSM2(pm);
 	return 0;
-}
+}*/
