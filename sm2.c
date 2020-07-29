@@ -3,6 +3,7 @@
 //#include "mirdef.h"
 //#include "string.h"
 //#include <time.h>
+//#include "sm3.h"
 //
 //
 //typedef struct
@@ -11,62 +12,73 @@
 //	big s;
 //}digital_sign;
 //
-//static big g_p;
-//static big g_a;
-//static big g_b;
-//static big g_n;
-//static big g_nb;
-//static epoint* g_Q; //公钥
-//static epoint* g_G; //基点
+//static big p;
+//static big a;
+//static big b;
+//static big n;
+//static big db; //私钥
+//static big Pb; //公钥
+//static epoint* G; //基点
 //
 ////定义参数
-//static const char sm2_p[] = "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF";
-//static const char sm2_a[] = "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC";
-//static const char sm2_b[] = "28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93";
-//static const char sm2_n[] = "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123";
-//static const char sm2_Gx[] = "32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7";
-//static const char sm2_Gy[] = "BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0";
+//struct
+//{
+//	char* p;//椭圆曲线的参数
+//	char* a;
+//	char* b;
+//	char* n;  //G的阶
+//	char* Gx;   
+//	char* Gy;
+//}para = {
+//	"FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF",
+//	"FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC",
+//	"28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93",
+//	"FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123",
+//	"32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7",
+//	"BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0",
+//};
 //
 //
 //void initSM2(miracl* pm)
 //{
+//	big Gx, Gy;
 //	pm->IOBASE = 16;
-//	g_p = mirvar(0);
-//	g_a = mirvar(0);
-//	g_b = mirvar(0);
-//	g_n = mirvar(0);
+//	p = mirvar(0);
+//	a = mirvar(0);
+//	b = mirvar(0);
+//	n = mirvar(0);
 //
-//	cinstr(g_p, (char*)sm2_p);
-//	cinstr(g_a, (char*)sm2_a);
-//	cinstr(g_b, (char*)sm2_b);
-//	cinstr(g_n, (char*)sm2_n);
+//	cinstr(p, para.p);
+//	cinstr(a, para.a);
+//	cinstr(b, para.b);
+//	cinstr(n, para.n);
 //
-//	ecurve_init(g_a, g_b, g_p, MR_AFFINE);
+//	ecurve_init(a, b, p, MR_AFFINE);
 //
 //	big tmp_x = mirvar(0);
 //	big tmp_y = mirvar(0);
-//	cinstr(tmp_x, (char*)sm2_Gx);
-//	cinstr(tmp_y, (char*)sm2_Gy);
-//	g_G = epoint_init();//内存分配给gf(p)椭圆曲线一个点 初始化为无穷大
+//	cinstr(tmp_x, (char*)Gx);
+//	cinstr(tmp_y, (char*)Gy);
+//	G = epoint_init();//内存分配给gf(p)椭圆曲线一个点 初始化为无穷大
 //    //设置点坐标 若属于当前方程返回true 不满足方程返回false
-//	if (!epoint_set(tmp_x, tmp_y, 1, g_G))
+//	if (!epoint_set(tmp_x, tmp_y, 1, G))
 //	{
 //		exit(0);
 //	}
 //
 //	//私钥
-//	g_nb = mirvar(0);
+//	db = mirvar(0);
 //	irand(time(NULL));
-//	bigbits(256, g_nb);
+//	bigbits(256, db);
 //
-//	while (mr_compare(g_nb, g_n) >= 0)
+//	while (mr_compare(db, n) >= 0)
 //	{
-//		bigbits(256, g_nb);
+//		bigbits(256, db);
 //	}
 //
 //	//公钥
-//	g_Q = epoint_init();
-//	ecurve_mult(g_nb, g_G, g_Q);  //g_Q = g_nb*g_G
+//	Pb = epoint_init();
+//	ecurve_mult(db, G, Pb);  //g_Q = g_nb*g_G
 //}
 //
 ////sm2签名
@@ -74,10 +86,10 @@
 //{
 //	big k = mirvar(0);
 //	irand(time(NULL));
-//	bigrand(g_n, k);
+//	bigrand(n, k);
 //
 //	epoint* p = epoint_init();
-//	ecurve_mult(k, g_G, p); //A4 计算椭圆曲线点(x1,y1)=[k]G
+//	ecurve_mult(k, G, p); //A4 计算椭圆曲线点(x1,y1)=[k]G
 //
 //	digital_sign a; //计算r=(e+x1)modn r=0 or r+k=n 返回3
 //	a.r = mirvar(0);
@@ -88,7 +100,7 @@
 //
 //	big tmp_rk = mirvar(0); 
 //	add(a.r, k, tmp_rk);
-//	divide(a.r, g_n, g_n);
+//	divide(a.r, n, g_n);
 //	while (0 == a.r || tmp_rk == g_n) //返回3
 //	{
 //		irand(time(NULL));
@@ -182,12 +194,14 @@
 //	return 0;
 //}
 //
+//
 //int main()
 //{
 //	miracl* pm = mirsys(500, 16);
 //	big z = mirvar(0);
 //	double duration;
-//	bigdig(32, 16, z);
+//	//bigdig(32, 16, z);
+//	
 //	clock_t start, finish;
 //
 //	start = clock();
@@ -197,7 +211,22 @@
 //	printf("KeyGen: %f seconds\n", duration);
 //
 //	start = clock();
-//	digital_sign a = signSM2(pm, z);
+//	digital_sign a;
+//
+//	/*
+//	结构体a转化为数组生成杂凑函数值
+//	*/
+//	unsigned char buf[300];
+//	char md[300];
+//	memset(md, 0, sizeof(md));
+//	memset(buf, 0, sizeof(buf));
+//	memcpy(buf, &a, sizeof(digital_sign)); //结构体转化为数组
+//	cotstr(z, md);  //big转化为char
+//	sm3(buf, 32, md);
+//	pm->IOBASE = 16;
+//	cinstr(z, md); //char转化为big
+//
+//	a = signSM2(pm, z);
 //	finish = clock();
 //	duration = (double)(finish - start) / CLOCKS_PER_SEC;
 //	printf("Sign: %f seconds\n", duration);
