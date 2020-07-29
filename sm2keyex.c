@@ -27,6 +27,11 @@ struct FPECC Ecc256 = {
 unsigned char randkey[] = { 0x83,0xA2,0xC9,0xC8,0xB9,0x6E,0x5A,0xF7,0x0B,0xD4,0x80,0xB4,0x72,0x40,0x9A,0x9A,0x32,0x72,0x57,0xF1,0xEB,0xB7,0x3F,0x5B,0x07,0x33,0x54,0xB2,0x48,0x66,0x85,0x63 };
 unsigned char randkeyb[] = { 0x33,0xFE,0x21,0x94,0x03,0x42,0x16,0x1C,0x55,0x61,0x9C,0x4A,0x0C,0x06,0x02,0x93,0xD5,0x43,0xC8,0x0A,0xF1,0x97,0x48,0xCE,0x17,0x6D,0x83,0x47,0x7D,0xE7,0x1C,0x80 };
 
+unsigned char enkey[32] = {
+0xB1,0x6B,0xA0,0xDA,0x27,0xC5,0x24,0x9A,0xF6,0x1D,0x6E,0x6E,0x12,0xD1,0x59,0xA5,
+0xB6,0x74,0x64,0x34,0xEB,0xD6,0x1B,0x62,0xEA,0xEB,0xC3,0xCC,0x31,0x5E,0x42,0x1D,
+};
+
 unsigned char sm2_par_dig[128] = {
 0xFF,0xFF,0xFF,0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFC,
@@ -40,6 +45,29 @@ unsigned char sm2_par_dig[128] = {
 
 
 
+int derand(unsigned char* r, int rlen)
+{
+	aes a;
+	char key[16];
+	char iv[16];
+	int i;
+
+	memcpy(key, enkey, 16);
+	memcpy(iv, enkey, 16);
+
+	if (!aes_init(&a, MR_ECB, 16, key, iv))
+	{
+		return 0;
+	}
+
+	for (i = 0; i < rlen; i += 16)
+	{
+		aes_decrypt(&a, (char*)r + i);
+	}
+
+	aes_end(&a);
+	return 0;
+}
 
 void PrintBuf(unsigned char* buf, int buflen)
 {
@@ -380,7 +408,252 @@ int sm2_keyagreement_a4_10(unsigned char* kx1, int kx1len,
 	big p, a, b, n, x, y;
 	epoint* G, * w;
 	int ret = 0;
+	unsigned char kx1buf[32], ky1buf[32];
+	unsigned char kx2buf[32], ky2buf[32];
+	unsigned char xubuf[32];
+	unsigned char yubuf[32];
+	unsigned char buf[256];
+
+	unsigned char za[32];
+	unsigned char zb[32];
+	unsigned char hash[32];
+
+	miracl* mip = mirsys(20, 0);
+
+	mip->IOBASE = 16;
+	k = mirvar(0);
+	x1 = mirvar(0);
+	y1 = mirvar(0);
+	x2 = mirvar(0);
+	y2 = mirvar(0);
+	_x1 = mirvar(0);
+	_x2 = mirvar(0);
+	ta = mirvar(0);
+	da = mirvar(0);
+
+	p = mirvar(0);
+	a = mirvar(0);
+	b = mirvar(0);
+	n = mirvar(0);
+	x = mirvar(0);
+	y = mirvar(0);
+
+	cinstr(p, cfig->p);
+	cinstr(a, cfig->a);
+	cinstr(b, cfig->b);
+	cinstr(n, cfig->n);
+	cinstr(x, cfig->x);
+	cinstr(y, cfig->y);
+	ecurve_init(a, b, p, MR_PROJECTIVE);
+	G = epoint_init();
+	w = epoint_init();
+
+	sm3_z(ida, idalen, pax, paxlen, pay, paylen, za);
+	sm3_z(idb, idblen, pbx, pbxlen, pby, pbylen, zb);
+
+	bytes_to_big(kx1len, (char*)kx1, x1);
+	bytes_to_big(ky1len, (char*)ky1, y1);
+
+	if (!epoint_set(x1, y1, 0, G)) {
+		exit(0);  //这里已经改了
+	}
+
+	big_to_bytes(32, x1, (char *)kx1buf, TRUE);
+	big_to_bytes(32, y1, (char*)ky1buf, TRUE);
+	memcpy(buf, kx1buf + 16, 16);
+	buf[0] |= 0x80;
+	bytes_to_big(16, (char *)buf, _x1);
+	//todo   预编译部分
+
+	bytes_to_big(private_a_len, (char *)private_a, da);
+	memcpy(buf, ra, ralen);
+	derand(buf, ralen);
+	bytes_to_big(ralen, (char *)buf, k);
+
+
+	bytes_to_big(kx2len, (char*)kx2, x2);
+	bytes_to_big(ky2len, (char*)ky2, y2);
+	if (!epoint_set(x2, y2, 0, G))
+		return 0;  //这里改动了
+
+	big_to_bytes(32, x2, (char*)kx2buf, TRUE);
+	big_to_bytes(32, y2, (char*)ky2buf, TRUE);
+	memcpy(buf, kx2buf + 16, 16);
+	buf[0] |= 0x80;
+	bytes_to_big(16, (char*)buf, _x2);
+
+	bytes_to_big(pbxlen, (char*)pbx, x);
+	bytes_to_big(pbylen, (char*)pby, y);
+	if (!epoint_set(x, y, 0, w))
+		exit(0);
+
+	ecurve_mult(_x2, G, G);
+	ecurve_add(w, G);
+	ecurve_mult(ta, G, G);
+	if (point_at_infinity(G))
+		return 0;
+
+
+	epoint_get(G, x, y);
+	big_to_bytes(32, x, (char*)xubuf, TRUE);
+	big_to_bytes(32, y, (char*)yubuf, TRUE);
+#if SM2_DEBUG
+	printf("xu & yu: ");
+	PrintBuf(xubuf, 32);
+	PrintBuf(yubuf, 32);
+#endif
+
+
+	memcpy(buf, xubuf, 32);
+	memcpy(buf + 32, yubuf, 32);
+	memcpy(buf + 64, za, 32);
+	memcpy(buf + 96, zb, 32);
+	kdf_key(buf, 128, kalen, kabuf);
+#if SM2_DEBUG
+	printf("Ka: ");
+	PrintBuf(kabuf, kalen);
+#endif
+
+	if ((s1 != NULL) || (sa != NULL))
+	{
+		memcpy(buf, xubuf, 32);
+		memcpy(buf + 32, za, 32);
+		memcpy(buf + 64, zb, 32);
+		memcpy(buf + 96, kx1buf, 32);
+		memcpy(buf + 128, ky1buf, 32);
+		memcpy(buf + 160, kx2buf, 32);
+		memcpy(buf + 192, ky2buf, 32);
+		sm3(buf, 32 * 7, hash);
+	}
+
+	if (s1 != NULL)
+	{
+		buf[0] = 0x02;
+		memcpy(buf + 1, yubuf, 32);
+		memcpy(buf + 33, hash, 32);
+		sm3(buf, 65, s1);
+#if SM2_DEBUG
+		printf("S1: ");
+		PrintBuf(s1, 32);
+#endif
+	}
+
+	if (sa != NULL)
+	{
+		buf[0] = 0x03;
+		memcpy(buf + 1, yubuf, 32);
+		memcpy(buf + 33, hash, 32);
+		sm3(buf, 65, sa);
+#if SM2_DEBUG
+		printf("Sa: ");
+		PrintBuf(sa, 32);
+#endif
+	}
+
+	ret = 1;
+
 }
+
+
+void sm2_keyagreement_b10(
+	unsigned char* pax, int paxlen,
+	unsigned char* pay, int paylen,
+	unsigned char* pbx, int pbxlen,
+	unsigned char* pby, int pbylen,
+	unsigned char* kx1, int kx1len,
+	unsigned char* ky1, int ky1len,
+	unsigned char* kx2, int kx2len,
+	unsigned char* ky2, int ky2len,
+	unsigned char* xv, int xvlen,
+	unsigned char* yv, int yvlen,
+	unsigned char* ida, int idalen,
+	unsigned char* idb, int idblen,
+	unsigned char* s2)
+{
+	/*
+
+功能：密钥协商的接收方调用此函数产生s2，用于验证协商过程的正确性。
+说明：
+[输入] (pax, pay)是发起方的公钥
+[输入] (pbx, pby)是接收方的公钥
+[输入] (kx1, ky1)是发起方产生的临时公钥
+[输入] (kx2, ky2)是接收方产生的临时公钥
+[输入] (xv, yv)是接收方产生的中间结果
+[输入] ida是发起方的用户标识
+[输入] idb是接收方的用户标识
+
+[输出] s2是接收方产生的32字节的HASH值，应等于sa。
+
+
+返回值：无
+
+*/
+
+/*
+	S2=Hash(0x03∥ yV ∥Hash(xV ∥ ZA ∥ ZB ∥ x1 ∥ y1 ∥ x2 ∥ y2))：
+*/
+
+	big x1, y1, x2, y2, x3, y3;
+	unsigned char buf[256];
+	unsigned char za[32];
+	unsigned char zb[32];
+	miracl* mip = mirsysy(20, 0);
+
+	mip->IOBASE = 16;
+	x1 = mirvar(0);
+	y1 = mirvar(0);
+	x2 = mirvar(0);
+	y2 = mirvar(0);
+	x3 = mirvar(0);
+	y3 = mirvar(0);
+
+	sm3_z(ida, idalen, pax, paxlen, pay, paylen, za);
+	sm3_z(idb, idblen, pbx, pbxlen, pby, pbylen, zb);
+
+	bytes_to_big(kx1len, (char*)kx1, x1);
+	bytes_to_big(ky1len, (char*)ky1, y1);
+	bytes_to_big(kx2len, (char*)kx2, x2);
+	bytes_to_big(ky2len, (char*)ky2, y2);
+#if SM2_DEBUG
+	bytes_to_big(xvlen, (char*)xv, x3);
+	bytes_to_big(yvlen, (char*)yv, y3);
+#else
+	memcpy(buf, xv, xvlen);
+	derand(buf, xvlen);
+	bytes_to_big(xvlen, (char*)buf, x3);
+	memcpy(buf, yv, yvlen);
+	derand(buf, yvlen);
+	bytes_to_big(yvlen, (char*)buf, y3);
+#endif
+
+	big_to_bytes(32, x3, (char*)buf, TRUE);
+	memcpy(buf + 32, za, 32);
+	memcpy(buf + 32 + 32, zb, 32);
+	big_to_bytes(32, x1, (char*)buf + 32 + 32 + 32, TRUE);
+	big_to_bytes(32, y1, (char*)buf + 32 + 32 + 32 + 32, TRUE);
+	big_to_bytes(32, x2, (char*)buf + 32 + 32 + 32 + 32 + 32, TRUE);
+	big_to_bytes(32, y2, (char*)buf + 32 + 32 + 32 + 32 + 32 + 32, TRUE);
+	sm3(buf, 32 * 7, s2);
+
+	buf[0] = 0x03;
+	big_to_bytes(32, y3, (char*)buf + 1, TRUE);
+	memcpy(buf + 1 + 32, s2, 32);
+	sm3(buf, 65, s2);
+#if SM2_DEBUG
+	printf("s2: ");
+	PrintBuf(s2, 32);
+#endif
+
+	mirkill(x1);
+	mirkill(y1);
+	mirkill(x2);
+	mirkill(y2);
+	mirkill(x3);
+	mirkill(y3);
+	mirexit();
+
+}
+
 
 
 
