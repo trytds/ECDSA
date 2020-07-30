@@ -87,6 +87,7 @@ int derand(unsigned char* r, int rlen)
 	return 0;
 }
 
+//每32项为一行输出buf
 void PrintBuf(unsigned char* buf, int buflen)
 {
 	int i;
@@ -407,9 +408,9 @@ int sm2_keyagreement_b1_9(
 	sm3_z(idb, idblen, pbx, pbxlen, pby, pbylen, zb);
 
 
-	bigrand(n, k);
+	bigrand(n, k); //B1 产生rB
 
-	ecurve_mult(k, G, G);
+	ecurve_mult(k, G, G); //B2
 	epoint_get(G, x2, y2);
 
 	big_to_bytes(32, x2, (char*)kx2buf, TRUE);
@@ -422,10 +423,10 @@ int sm2_keyagreement_b1_9(
 
 	memcpy(buf, kx2buf + 16, 16);
 	buf[0] |= 0x80;
-	bytes_to_big(16, (char*)buf, _x2);
-	bytes_to_big(private_b_len, (char*)private_b, db);
+	bytes_to_big(16, (char*)buf, _x2); //_x2=2^w+(x2&(2^w-1))
 
-	mad(_x2, k, db, n, n, tb);
+	bytes_to_big(private_b_len, (char*)private_b, db);
+	mad(_x2, k, db, n, n, tb);  //B4 tb=(db+_x2*k)modn
 	
 	bytes_to_big(kx1len, (char*)kx1, x1);
 	bytes_to_big(ky1len, (char*)ky1, y1);
@@ -435,9 +436,13 @@ int sm2_keyagreement_b1_9(
 
 	big_to_bytes(32, x1, (char*)kx1buf, TRUE);
 	big_to_bytes(32, y1, (char*)ky1buf, TRUE);
+
+	/*
+	2^w-1是除了首位为0其他都为1与x1与运算x1首位变为0 再加2^w 表示x首位变为1，其他位不变
+	*/
 	memcpy(buf, kx1buf + 16, 16);
-	buf[0] |= 0x80;
-	bytes_to_big(16, (char*)buf, _x1);
+	buf[0] |= 0x80; //buf第一个字节最高位为1 其他部分不变 相当于2^w-1
+	bytes_to_big(16, (char*)buf, _x1); //B5 _x1=2^w+(x1&(2^w-1))
 
 	bytes_to_big(paxlen, (char*)pax, x);
 	bytes_to_big(paylen, (char*)pay, y);
@@ -447,9 +452,9 @@ int sm2_keyagreement_b1_9(
 	if (!epoint_set(x, y, 0, w))
 		return 0;
 
-	ecurve_mult(_x1, G, G);
-	ecurve_add(w, G);
-	ecurve_mult(tb, G, G);
+	ecurve_mult(_x1, G, G); //[_x1]RA
+	ecurve_add(w, G); //PA+[_x1]RA
+	ecurve_mult(tb, G, G); //B6 余因子h=1 tb不变 [h*tb](PA+[_x1]RA)
 	if (point_at_infinity(G))
 		return 0;
 
@@ -577,7 +582,7 @@ int sm2_keyagreement_a4_10(unsigned char* kx1, int kx1len,
 	cinstr(n, cfig->n);
 	cinstr(x, cfig->x);
 	cinstr(y, cfig->y);
-	ecurve_init(a, b, p, MR_PROJECTIVE);
+	ecurve_init(a, b, p, MR_AFFINE);
 	G = epoint_init();
 	w = epoint_init();
 

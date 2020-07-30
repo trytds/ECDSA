@@ -73,9 +73,17 @@ int main()
 
 	sm2_keygen(xa, &kx1len, ya, &ky1len, da, &ralen);
 	sm2_keygen(xb, &kx1len, yb, &ky1len, db, &ralen);
+	
+	clock_t start, finish;
+	double duration;
 
+	start = clock();
 	sm2_keyagreement_a1_3(kx1, &kx1len, ky1, &ky1len, ra, &ralen);
+	finish = clock();
+	duration = (double)(finish - start) / CLOCKS_PER_SEC;
+	printf("a1_3: %f seconds\n", duration);
 
+	start = clock();
 	sm2_keyagreement_b1_9(
 		kx1, kx1len,
 		ky1, ky1len,
@@ -94,7 +102,12 @@ int main()
 		yv, &yvlen,
 		sb
 	);
+	finish = clock();
+	duration = (double)(finish - start) / CLOCKS_PER_SEC;
+	printf("b1_9: %f seconds\n", duration);
 
+
+	start = clock();
 	sm2_keyagreement_a4_10(
 		kx1, kx1len,
 		ky1, ky1len,
@@ -113,7 +126,12 @@ int main()
 		s1,
 		sa
 	);
+	finish = clock();
+	duration = (double)(finish - start) / CLOCKS_PER_SEC;
+	printf("a4_10: %f seconds\n", duration);
 
+
+	start = clock();
 	sm2_keyagreement_b10(
 		xa, 32,
 		ya, 32,
@@ -129,6 +147,9 @@ int main()
 		idb, 17,
 		s2
 	);
+	finish = clock();
+	duration = (double)(finish - start) / CLOCKS_PER_SEC;
+	printf("b10: %f seconds\n", duration);
 
 	if (memcmp(s1, sb, 32) != 0)
 	{
