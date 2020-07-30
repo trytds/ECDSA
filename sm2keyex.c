@@ -6,6 +6,14 @@
 #include "mirdef.h"
 #include <time.h>
 
+static big p;
+static big a;
+static big b;
+static big n;
+static epoint* G;
+
+static big k; //私钥
+
 struct FPECC
 {
 	char* p;
@@ -23,7 +31,7 @@ struct FPECC
 	"BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0",
 };
 
-unsigned char randkey[] = { 0x83,0xA2,0xC9,0xC8,0xB9,0x6E,0x5A,0xF7,0x0B,0xD4,0x80,0xB4,0x72,0x40,0x9A,0x9A,0x32,0x72,0x57,0xF1,0xEB,0xB7,0x3F,0x5B,0x07,0x33,0x54,0xB2,0x48,0x66,0x85,0x63 };
+unsigned char randkeya[] = { 0x83,0xA2,0xC9,0xC8,0xB9,0x6E,0x5A,0xF7,0x0B,0xD4,0x80,0xB4,0x72,0x40,0x9A,0x9A,0x32,0x72,0x57,0xF1,0xEB,0xB7,0x3F,0x5B,0x07,0x33,0x54,0xB2,0x48,0x66,0x85,0x63 };
 unsigned char randkeyb[] = { 0x33,0xFE,0x21,0x94,0x03,0x42,0x16,0x1C,0x55,0x61,0x9C,0x4A,0x0C,0x06,0x02,0x93,0xD5,0x43,0xC8,0x0A,0xF1,0x97,0x48,0xCE,0x17,0x6D,0x83,0x47,0x7D,0xE7,0x1C,0x80 };
 
 unsigned char enkey[32] = {
@@ -97,7 +105,7 @@ void PrintBuf(unsigned char* buf, int buflen)
 /********************************************************/
 //               以下是P域上的ECC函数                   //
 /*******************************************************/
-void sm2_keygen(unsigned char* wx, int* wxlen, unsigned char* wy, int* wylen, unsigned char* privkey, int* privkeylen)
+void sm2_keygen(unsigned char* wx, int *wxlen, unsigned char* wy, int *wylen, unsigned char* privkey, int* privkeylen)
 {
 	/*
 	功能：生成SM2公私钥对
@@ -109,8 +117,7 @@ void sm2_keygen(unsigned char* wx, int* wxlen, unsigned char* wy, int* wylen, un
 	[输出] privkeylen： privkey的字节数，32
 	*/
 	struct FPECC* cfig = &Ecc256;
-	epoint* G;
-	big a, b, p, n, x, y, key1;
+	big x, y, key1;
 	miracl* mip = mirsys(20, 0);
 
 	mip->IOBASE = 16;
@@ -131,16 +138,15 @@ void sm2_keygen(unsigned char* wx, int* wxlen, unsigned char* wy, int* wylen, un
 	cinstr(x, cfig->x);
 	cinstr(y, cfig->y);
 
-	ecurve_init(a, b, p, MR_PROJECTIVE);
+	ecurve_init(a, b, p, MR_AFFINE);
 	G = epoint_init();
 	epoint_set(x, y, 0, G);
 
-	irand(time(NULL));
 	bigrand(n, key1);
 	ecurve_mult(key1, G, G);
 	epoint_get(G, x, y);
 
-	* wxlen = big_to_bytes(32, x, (char*)wx, TRUE);
+	*wxlen = big_to_bytes(32, x, (char*)wx, TRUE);
 	*wylen = big_to_bytes(32, y, (char*)wy, TRUE);
 	*privkeylen = big_to_bytes(32, key1, (char*)privkey, TRUE);
 }
@@ -272,9 +278,8 @@ void sm2_keyagreement_a1_3(unsigned char* kx1, int* kx1len,
 
 */
 	struct FPECC* cfig = &Ecc256;
-	big k, x1, y1;
-	big a, b, p, n, x, y;
-	epoint* G;
+	big x1, y1;
+	big x, y;
 	miracl* mip = mirsys(20, 0);
 
 	mip->IOBASE = 16;
@@ -298,16 +303,12 @@ void sm2_keyagreement_a1_3(unsigned char* kx1, int* kx1len,
 	G = epoint_init();
 	epoint_set(x, y, 0, G);
 
-	irand(time(NULL));
-	bytes_to_big(32, (char*)randkey, k);
-	/**do {
-		bigrand(n, k);
-	} while (k->len == 0)*/
+	bytes_to_big(32, (char*)randkeya, k);
 	bigrand(n, k);
 	ecurve_mult(k, G, G);
 	epoint_get(G, x1, y1);
 
-	* kx1len = big_to_bytes(32, x1, (char*)kx1, TRUE);
+	*kx1len = big_to_bytes(32, x1, (char*)kx1, TRUE);
 	*ky1len = big_to_bytes(32, y1, (char*)ky1, TRUE);
 	*ralen = big_to_bytes(32, k, (char*)ra, TRUE);
 	enrand(ra, *ralen);
@@ -356,10 +357,9 @@ int sm2_keyagreement_b1_9(
 */
 
 	struct FPECC* cfig = &Ecc256;
-	big k, x1, y1, x2, y2, _x1, _x2, db, tb;
-	big p, a, b, n, x, y;
-	epoint* G, * w;
-	int ret = 0;
+	big x1, y1, x2, y2, _x1, _x2, db, tb;
+	big x, y;
+	epoint* w;
 	unsigned char kx1buf[32], ky1buf[32];
 	unsigned char kx2buf[32], ky2buf[32];
 	unsigned char xvbuf[32];
@@ -405,7 +405,6 @@ int sm2_keyagreement_b1_9(
 	sm3_z(idb, idblen, pbx, pbxlen, pby, pbylen, zb);
 
 
-	irand(time(NULL));
 	bigrand(n, k);
 
 	ecurve_mult(k, G, G);
@@ -490,8 +489,7 @@ int sm2_keyagreement_b1_9(
 		*yvlen = 32;
 		enrand(yv, *yvlen);
 	}
-	ret = 1;
-	return ret;
+	return 1;
 }
 
 
@@ -536,10 +534,9 @@ int sm2_keyagreement_a4_10(unsigned char* kx1, int kx1len,
 
 */
 	struct FPECC* cfig = &Ecc256;
-	big k, x1, y1, x2, y2, _x1, _x2, da, ta;
-	big p, a, b, n, x, y;
-	epoint* G, * w;
-	int ret = 0;
+	big x1, y1, x2, y2, _x1, _x2, da, ta;
+	big x, y;
+	epoint* w;
 	unsigned char kx1buf[32], ky1buf[32];
 	unsigned char kx2buf[32], ky2buf[32];
 	unsigned char xubuf[32];
@@ -663,8 +660,7 @@ int sm2_keyagreement_a4_10(unsigned char* kx1, int kx1len,
 		memcpy(buf + 33, hash, 32);
 		sm3(buf, 65, sa);
 	}
-    ret = 1;
-	return ret;
+	return 1;
 }
 
 
