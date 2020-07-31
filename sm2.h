@@ -1,14 +1,3 @@
-//#include "miracl.h"
-//int initSM2(miracl* pm);
-//int encrySM2(miracl* pm, char* plain, int klen, char* msg);
-//int decrySM2(miracl* pm, char* cipher, int klen, char* msg);
-//int kdf(unsigned char* x2andy2_byte, int klen, unsigned char* kbuf);
-//
-
-#include "miracl.h"
-int enrand(unsigned char* r, int rlen);
-int derand(unsigned char* r, int rlen);
-void PrintBuf(unsigned char* buf, int buflen);
 void sm2_keygen(unsigned char* wx, int* wxlen, unsigned char* wy, int* wylen, unsigned char* privkey, int* privkeylen);
 int sm3_z(unsigned char* userid, int userid_len, unsigned char* xa, int xa_len, unsigned char* ya, int ya_len, unsigned char* z);
 int kdf(const char* cdata, int datalen, int keylen, char* retdata);

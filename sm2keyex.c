@@ -103,10 +103,7 @@ void PrintBuf(unsigned char* buf, int buflen)
 	return;
 }
 
-
-/********************************************************/
-//               以下是P域上的ECC函数                   //
-/*******************************************************/
+//公钥私钥生成
 void sm2_keygen(unsigned char* wx, int *wxlen, unsigned char* wy, int *wylen, unsigned char* privkey, int* privkeylen)
 {
 	/*
