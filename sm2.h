@@ -1,10 +1,10 @@
-void sm2_keygen(unsigned char* wx, int* wxlen, unsigned char* wy, int* wylen, unsigned char* privkey, int* privkeylen);
-int sm3_z(unsigned char* userid, int userid_len, unsigned char* xa, int xa_len, unsigned char* ya, int ya_len, unsigned char* z);
+void initSM2(unsigned char* wx, int* wxlen, unsigned char* wy, int* wylen, unsigned char* privkey, int* privkeylen);
+int genZSM3(unsigned char* userid, int userid_len, unsigned char* xa, int xa_len, unsigned char* ya, int ya_len, unsigned char* z);
 int kdf(const char* cdata, int datalen, int keylen, char* retdata);
-void sm2_keyagreement_a1_3(unsigned char* kx1, int* kx1len,
+void a1_3SM2(unsigned char* kx1, int* kx1len,
 	unsigned char* ky1, int* ky1len, unsigned char* ra, int* ralen);
 
-int sm2_keyagreement_b1_9(
+int b1_9SM2(
 	unsigned char* kx1, int kx1len,
 	unsigned char* ky1, int ky1len,
 	unsigned char* pax, int paxlen,
@@ -22,7 +22,7 @@ int sm2_keyagreement_b1_9(
 	unsigned char* yv, int* yvlen,
 	unsigned char* sb);
 
-int sm2_keyagreement_a4_10(unsigned char* kx1, int kx1len,
+int a4_10SM2(unsigned char* kx1, int kx1len,
 	unsigned char* ky1, int ky1len,
 	unsigned char* pax, int paxlen,
 	unsigned char* pay, int paylen,
@@ -39,7 +39,7 @@ int sm2_keyagreement_a4_10(unsigned char* kx1, int kx1len,
 	unsigned char* s1,
 	unsigned char* sa);
 
-void sm2_keyagreement_b10(
+void b10SM2(
 	unsigned char* pax, int paxlen,
 	unsigned char* pay, int paylen,
 	unsigned char* pbx, int pbxlen,

@@ -47,9 +47,6 @@
     <ClCompile Include="sm3.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="sm2encry0.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="sm2en.c">
       <Filter>源文件</Filter>
     </ClCompile>

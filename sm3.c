@@ -4,6 +4,9 @@
 #include <time.h>
 #include "sm3.h"
 
+/*
+  处理消息块
+*/
 void sm3_block(SM3_CTX* ctx)
 {
 	int j, k;
@@ -12,8 +15,8 @@ void sm3_block(SM3_CTX* ctx)
 	unsigned long a, b, c, d, e, f, g, h;
 	unsigned long w[132];
 
-
-	for (j = 0; j < 16; j++)
+	/*消息扩展*/
+	for (j = 0; j < 16; j++)  //消息分组Bi划分为16个字W0...W15
 		w[j] = ctx->data[j];
 
 	for (j = 16; j < 68; j++)
@@ -28,7 +31,7 @@ void sm3_block(SM3_CTX* ctx)
 		w[k] = w[j] ^ w[j + 4];
 	}
 
-
+	/*消息压缩*/
 	a = ctx->h[0];
 	b = ctx->h[1];
 	c = ctx->h[2];
@@ -38,6 +41,7 @@ void sm3_block(SM3_CTX* ctx)
 	g = ctx->h[6];
 	h = ctx->h[7];
 
+	/*压缩函数第一部分0-16*/
 	for (j = 0; j < 16; j++)
 	{
 		ss1 = ROTATE(ROTATE(a, 12) + e + ROTATE(TH, j), 7);
@@ -56,7 +60,7 @@ void sm3_block(SM3_CTX* ctx)
 		e = P0(tt2);
 	}
 
-
+	/*压缩函数第二部分16-33*/
 	for (j = 16; j < 33; j++)
 	{
 		ss1 = ROTATE(ROTATE(a, 12) + e + ROTATE(TL, j), 7);
@@ -74,7 +78,7 @@ void sm3_block(SM3_CTX* ctx)
 		f = e;
 		e = P0(tt2);
 	}
-
+	/*压缩函数第三部分33-63*/
 	for (j = 33; j < 64; j++)
 	{
 		ss1 = ROTATE(ROTATE(a, 12) + e + ROTATE(TL, (j - 32)), 7);
@@ -104,9 +108,12 @@ void sm3_block(SM3_CTX* ctx)
 
 }
 
-
+/*
+  SM3初始化
+*/
 void SM3_Init(SM3_CTX* ctx)
 {
+	/*初始值IV*/
 	ctx->h[0] = 0x7380166fUL;
 	ctx->h[1] = 0x4914b2b9UL;
 	ctx->h[2] = 0x172442d7UL;
@@ -194,10 +201,10 @@ void SM3_Update(SM3_CTX* ctx, const void* data, unsigned int len)
 		switch (sc)
 		{
 		case 0:
-			ctx->data[i] = 0x80000000;
+			ctx->data[i] = 0x80000000; 
 			break;
 		case 1:
-			ctx->data[i] = (d[0] << 24) | 0x800000;
+			ctx->data[i] = (d[0] << 24) | 0x800000; 
 			break;
 		case 2:
 			ctx->data[i] = (d[0] << 24) | (d[1] << 16) | 0x8000;
@@ -212,6 +219,9 @@ void SM3_Update(SM3_CTX* ctx, const void* data, unsigned int len)
 
 }
 
+/*
+ 生成杂凑值
+*/
 void SM3_Final(unsigned char* md, SM3_CTX* ctx)
 {
 
@@ -250,9 +260,12 @@ void SM3_Final(unsigned char* md, SM3_CTX* ctx)
 	nl2c(ctx->h[7], md);
 }
 
+/*
+  SM3算法主函数
+*/
 unsigned char* sm3(const unsigned char* d, unsigned int n, unsigned char* md)
 {
-	SM3_CTX ctx;
+	SM3_CTX ctx; //sm3上下文
 
 	SM3_Init(&ctx);
 	SM3_Update(&ctx, d, n);
@@ -262,47 +275,3 @@ unsigned char* sm3(const unsigned char* d, unsigned int n, unsigned char* md)
 	return(md);
 }
 
-
-
-#if 0
-
-int main()
-{
-	unsigned char data[] = "abc";
-	/*66c7f0f4 62eeedd9 d1f2d46b dc10e4e2 4167c487 5cf2f7a2 297da02b 8f4ba8e0*/
-	unsigned char data1[] = "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
-	/*debe9ff9 2275b8a1 38604889 c18e5a4d 6fdb70e5 387e5765 293dcba3 9c0c5732*/
-	unsigned char md[SM3_DIGEST_LENGTH];
-
-	clock_t start, end;
-	double tt;
-	int j;
-
-	memset(md, 0, sizeof(md));
-	sm3(data, 3, md);
-#if DEBUG_SM3
-	PrintBuf(md, 32);
-#endif
-
-	memset(md, 0, sizeof(md));
-	sm3(data1, 64, md);
-#if DEBUG_SM3
-	PrintBuf(md, 32);
-#endif
-
-	start = clock();
-
-	for (j = 0; j < 1000000; j++)
-	{
-		sm3(data1, 55, md);
-	}
-
-
-	end = clock();
-
-	tt = (double)(end - start) / CLOCKS_PER_SEC;
-	printf("speed:%lfMbps\n", (double)512 / tt);
-
-	return 0;
-}
-#endif

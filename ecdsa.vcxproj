@@ -152,7 +152,6 @@
     <ClCompile Include="rsa.c" />
     <ClCompile Include="sm2.c" />
     <ClCompile Include="sm2en.c" />
-    <ClCompile Include="sm2encry0.c" />
     <ClCompile Include="sm2keyex.c" />
     <ClCompile Include="sm3.c" />
   </ItemGroup>
